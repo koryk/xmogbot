@@ -1,33 +1,34 @@
 import praw
+import sys
 import time
 import creds
 
 
-user_agent = "aphoenix's bot for the Transmogrification subreddit"
+user_agent = "asoiaf post bot"
 thing_limit = 15 
 
 
 r = praw.Reddit(user_agent=user_agent)
 r.login(creds.uid,creds.pw)
-xmog = r.get_subreddit('Transmogrification')
+xmog = r.get_subreddit('testasoiaf')
+print '''logged in'''
 
-
-cloth = ['cloth','warlock','mage','priest','cloth', 'lock','demonology','demo',
-                        'destro','affliction','shadow']
-leather = ['leather','rogue','druid','monk','leather','boomkin','kitty','feral',
-                        'assassination','mutliation']
-mail = ['mail','hunter','shaman','mail','huntard','shammy','totem']
-plate = ['plate','warrior','death knight','dk','pally','paladin','plate'] 
-meta = ['meta','help']
-types = [cloth,leather,mail,plate,meta]
-
-
-flagurls = ['imgur','min.us']
-
+got = ['agot', 'got']
+cok = ['acok','cok']
+asos = ['asos','sos']
+affc = ['affc','ffc'] 
+adwd = ['adwd','dwd']
+twow = ['twow','wow']
+all = ['all']
+de = ['d&e','d&amp;e','dunk&amp;egg']
+types = [got,cok,asos,affc,adwd,twow,de,all]
+crow = ['crow business']
+none = ['no spoilers', 'no spoiler']
+others = [crow, none]
 
 updated = """Your friendly neighbourhood flairbot added flair to your post
             automatically. If your flair is in error, please do not
-            hesitate to tell /u/aphoenix about it."""
+            hesitate to tell a moderator about it. Your post has been marked as spoiler level: """
 
 
 # already taken care of = atco
@@ -37,22 +38,25 @@ atcof = []
 atcoi = []
 
 
-def checkarmor(type, submission):
-    '''check against armor type keywords in title to auto assign flair'''
-    if any (word in submission.title.lower() for word in type):
-        print 'setting flair for ' + submission.id + ' to ' + type[0].capitalize()
+def checkarmor(type, submission, beforetext):
+    if any (beforetext + word in submission.title.lower() for word in type):
+        print 'setting flair for ' + submission.id + ' to ' + type[0].upper()
         try:
-            submission.set_flair(type[0].capitalize(),type[0])
-            submission.add_comment(updated)
+            submission.set_flair(type[0].upper(),type[0].replace('&',''))
+            #submission.add_comment(updated + type[0].upper() + '.')
             atcof.append(submission.id)
-        except Exception:
-            print 'did not add flair'
+        except Exception, e:
+            print 'did not add flair ', sys.exc_info()[0]
+	    print e;
 
 
 running = True
 while (running):
     for submission in xmog.get_hot(limit=thing_limit):
+	print 'checking submission ' + submission.title;
         if (submission.link_flair_text == None and submission.id not in atcof):
             for type in types:
-                checkarmor(type, submission)
+                checkarmor(type, submission, 'spoilers ')
+	    for type in others:
+		checkarmor(type, submission, '')
     time.sleep(600)
